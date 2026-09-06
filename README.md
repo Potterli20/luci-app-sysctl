@@ -2,6 +2,20 @@
 
 OpenWrt 24.10 的内核参数（sysctl）LuCI 管理界面：无需命令行，在浏览器里查看、修改、应用 sysctl 参数。
 
+## 界面预览
+
+**主界面：配置源标签、文件参数编辑与在线预设**
+
+![主界面：配置源标签、文件参数编辑与在线预设](screenshots/1.png)
+
+**在线预设与浏览内核参数**
+
+![在线预设与浏览内核参数](screenshots/2.png)
+
+**配置源查看/编辑与添加参数表单**
+
+![配置源查看/编辑与添加参数表单](screenshots/3.png)
+
 ## 功能
 
 - **自定义参数管理**：在 `/etc/sysctl.d/99-luci-sysctl.conf` 中增删改参数，开机自动加载，升级系统时文件作为 conffiles 保留
@@ -21,6 +35,10 @@ OpenWrt 24.10 的内核参数（sysctl）LuCI 管理界面：无需命令行，�
 luci-app-sysctl/
 ├── Makefile                        # OpenWrt 包定义（luci.mk）
 ├── build-ipk.sh                    # 免 SDK 打包 .ipk 脚本
+├── screenshots/                    # 界面截图（README 引用）
+│   ├── 1.png
+│   ├── 2.png
+│   └── 3.png
 ├── htdocs/
 │   └── luci-static/resources/view/
 │       └── sysctl.js               # 前端页面（客户端渲染 view）
