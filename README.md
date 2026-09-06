@@ -1,14 +1,3 @@
----
-AIGC:
-  ContentProducer: '001191110102MAD55U9H0F10002'
-  ContentPropagator: '001191110102MAD55U9H0F10002'
-  Label: '1'
-  ProduceID: 'cb458b3c-a90d-43b6-84c7-1e6cede149b3'
-  PropagateID: 'cb458b3c-a90d-43b6-84c7-1e6cede149b3'
-  ReservedCode1: 'ab10f0f5-3ac6-46f8-a6a8-200159451108'
-  ReservedCode2: 'ab10f0f5-3ac6-46f8-a6a8-200159451108'
----
-
 # luci-app-sysctl
 
 OpenWrt 24.10 的内核参数（sysctl）LuCI 管理界面：无需命令行，在浏览器里查看、修改、应用 sysctl 参数。
