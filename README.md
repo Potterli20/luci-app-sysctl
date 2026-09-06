@@ -1,14 +1,3 @@
----
-AIGC:
-  ContentProducer: '001191110102MAD55U9H0F10002'
-  ContentPropagator: '001191110102MAD55U9H0F10002'
-  Label: '1'
-  ProduceID: '0d7b2a97-5eeb-4d73-a5a9-c0ec79cc61ab'
-  PropagateID: '0d7b2a97-5eeb-4d73-a5a9-c0ec79cc61ab'
-  ReservedCode1: '9e824839-8fba-4fc1-8b98-d8c301564649'
-  ReservedCode2: '9e824839-8fba-4fc1-8b98-d8c301564649'
----
-
 # luci-app-sysctl
 
 OpenWrt 24.10 的内核参数（sysctl）LuCI 管理界面：无需命令行，在浏览器里查看、修改、应用 sysctl 参数。
@@ -26,6 +15,10 @@ OpenWrt 24.10 的内核参数（sysctl）LuCI 管理界面：无需命令行，�
 **配置源查看/编辑与添加参数表单**
 
 ![配置源查看/编辑与添加参数表单](screenshots/3.png)
+
+**添加参数与同名参数实时提醒**
+
+![添加参数与同名参数实时提醒](screenshots/4.png)
 
 ## 功能
 
@@ -50,7 +43,8 @@ luci-app-sysctl/
 ├── screenshots/                    # 界面截图（README 引用）
 │   ├── 1.png
 │   ├── 2.png
-│   └── 3.png
+│   ├── 3.png
+│   └── 4.png
 ├── htdocs/
 │   └── luci-static/resources/view/
 │       └── sysctl.js               # 前端页面（客户端渲染 view）
@@ -83,7 +77,7 @@ cp -a luci-app-sysctl feeds/luci/applications/ # 方式 B：放进 luci feed
 make menuconfig   # LuCI -> Applications -> <*> luci-app-sysctl
 make package/luci-app-sysctl/compile V=s
 
-# 产物：bin/packages/<arch>/luci-app-sysctl_1.5.9-1_all.ipk
+# 产物：bin/packages/<arch>/luci-app-sysctl_1.7.1-1_all.ipk
 ```
 
 > 放在 `package/` 下时 Makefile 会引用 `feeds/luci/luci.mk`，因此仍需 luci feed 已安装。
@@ -94,14 +88,14 @@ make package/luci-app-sysctl/compile V=s
 
 ```sh
 ./build-ipk.sh
-# -> luci-app-sysctl_1.5.9-1_all.ipk
+# -> luci-app-sysctl_1.7.1-1_all.ipk
 ```
 
 传到路由器安装：
 
 ```sh
-scp luci-app-sysctl_1.5.9-1_all.ipk root@192.168.1.1:/tmp/
-ssh root@192.168.1.1 "opkg install --force-reinstall /tmp/luci-app-sysctl_1.5.9-1_all.ipk"
+scp luci-app-sysctl_1.7.1-1_all.ipk root@192.168.1.1:/tmp/
+ssh root@192.168.1.1 "opkg install --force-reinstall /tmp/luci-app-sysctl_1.7.1-1_all.ipk"
 ```
 
 > 升级提示：仅前端页面（`sysctl.js`）有变化时，安装后刷新浏览器即可；后端 `luci.sysctl`（rpcd ucode）有变化时，还需执行 `/etc/init.d/rpcd restart`。不确定时升级后一律重启一次 rpcd 最稳妥。
@@ -122,6 +116,7 @@ ssh root@192.168.1.1 "opkg install --force-reinstall /tmp/luci-app-sysctl_1.5.9-
 | 编辑/禁用/删除 | 每行右侧按钮；禁用仅注释配置行，删除则从配置文件移除 |
 | 配置源标签 | 点击顶部配置源标签（含 `/etc/sysctl.conf` 主配置）在下方内联查看/编辑该文件参数，再点一次或点 **收起** 关闭 |
 | 应用配置 | 按顺序应用 `/etc/sysctl.conf` 与 `/etc/sysctl.d/*.conf`，内联展示报错明细 |
+| 检测重复 | 点击 **检测重复** 扫描所有配置源，列出被多个文件重复定义的参数、各文件取值与最终“生效来源”；可一键从指定文件删除多余条目（建议同名参数只保留一处） |
 | 在线预设 | 填入 GitHub 等配置源 URL，点击 **获取并预览** 查看解析结果与冲突提示，确认后 **导入到路由器**；填入的是 **GitHub 目录链接**（`github.com/用户/仓库/tree/分支/目录`）时会自动列出目录下全部 `.conf` 文件供点选；已导入后可 **检查更新**（自动对比新增/变更/移除并可应用）或 **移除预设** |
 | 浏览 | 下方"浏览内核参数"区按目录层级浏览 `/proc/sys` 实时值；目录行显示"目录"标识，点参数名或"进入"进子级，面包屑可逐级返回，另有"← 返回上一级"快捷链接 |
 | 搜索 | 输入至少 2 个字符自动搜索参数名（值需 3 个字符） |
@@ -167,6 +162,9 @@ rpcd 未注册 `luci.sysctl` 对象或 ACL 未生效：`/etc/init.d/rpcd restart
 
 **Q: 为什么总览表里看不到 /etc/sysctl.conf 的参数？**
 设计如此（v1.5.4 起）：主配置参数统一通过点击 `sysctl.conf` 标签查看/编辑，避免与配置源列表重复展示。
+
+**Q: 明明改了参数、应用配置也成功，为什么当前值没变？**
+大概率同名参数被多个文件定义，你的值被后面加载的文件覆盖了（文件名字典序越靠后优先级越高，如 `99-conntrack.conf` 会覆盖 `99-luci-sysctl.conf`）。点击 **检测重复** 可看到完整的定义链与生效来源，按提示删除多余定义或直接编辑生效文件。
 
 ## 更新日志
 
