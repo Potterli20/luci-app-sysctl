@@ -1,3 +1,14 @@
+---
+AIGC:
+  ContentProducer: '001191110102MAD55U9H0F10002'
+  ContentPropagator: '001191110102MAD55U9H0F10002'
+  Label: '1'
+  ProduceID: 'cb458b3c-a90d-43b6-84c7-1e6cede149b3'
+  PropagateID: 'cb458b3c-a90d-43b6-84c7-1e6cede149b3'
+  ReservedCode1: 'ab10f0f5-3ac6-46f8-a6a8-200159451108'
+  ReservedCode2: 'ab10f0f5-3ac6-46f8-a6a8-200159451108'
+---
+
 # luci-app-sysctl
 
 OpenWrt 24.10 的内核参数（sysctl）LuCI 管理界面：无需命令行，在浏览器里查看、修改、应用 sysctl 参数。
@@ -36,28 +47,29 @@ OpenWrt 24.10 的内核参数（sysctl）LuCI 管理界面：无需命令行，�
 
 ## 目录结构
 
+仓库根即 feed 根（可直接被 `scripts/feeds` 引用）；包本体在 `luci-app-sysctl/` 子目录（OpenWrt feed 要求每个 package 一个子目录）：
+
 ```
-luci-app-sysctl/
-├── Makefile                        # OpenWrt 包定义（luci.mk）
-├── build-ipk.sh                    # 免 SDK 打包 .ipk 脚本
-├── screenshots/                    # 界面截图（README 引用）
-│   ├── 1.png
-│   ├── 2.png
-│   ├── 3.png
-│   └── 4.png
-├── htdocs/
-│   └── luci-static/resources/view/
-│       └── sysctl.js               # 前端页面（客户端渲染 view）
-└── root/
-    ├── etc/sysctl.d/
-    │   └── 99-luci-sysctl.conf     # 自定义参数存储（conffile）
-    └── usr/share/
-        ├── luci/menu.d/
-        │   └── luci-app-sysctl.json # 菜单：系统 -> 内核参数
-        └── rpcd/
-            ├── ucode/luci.sysctl   # rpcd ucode 后端（ubus 对象 luci.sysctl）
-            └── acl.d/
-                └── luci-app-sysctl.json # ACL 权限声明
+luci-app-sysctl/                      # 仓库根 / feed 根
+├── luci-app-sysctl/                  # OpenWrt package（feed 扫描的就是这个子目录）
+│   ├── Makefile                      # OpenWrt 包定义（luci.mk）
+│   ├── build-ipk.sh                  # 免 SDK 打包 .ipk 脚本
+│   ├── htdocs/
+│   │   └── luci-static/resources/view/
+│   │       └── sysctl.js             # 前端页面（客户端渲染 view）
+│   └── root/
+│       ├── etc/sysctl.d/
+│       │   └── 99-luci-sysctl.conf   # 自定义参数存储（conffile）
+│       └── usr/share/
+│           ├── luci/menu.d/
+│           │   └── luci-app-sysctl.json # 菜单：系统 -> 内核参数
+│           └── rpcd/
+│               ├── ucode/luci.sysctl   # rpcd ucode 后端（ubus 对象 luci.sysctl）
+│               └── acl.d/
+│                   └── luci-app-sysctl.json # ACL 权限声明
+├── screenshots/                      # 界面截图（README 引用）
+│   ├── 1.png ... 4.png
+└── README.md
 ```
 
 ## 安装方式一：OpenWrt SDK / buildroot 编译（推荐）
@@ -107,6 +119,24 @@ ssh root@192.168.1.1 "opkg install --force-reinstall /tmp/luci-app-sysctl_1.7.1-
 ```
 
 然后刷新浏览器，菜单位于 **系统 -> 内核参数**。
+
+## 安装方式三：自定义 feed（buildroot）
+
+在 buildroot 的 `feeds.conf`（或 `feeds.conf.d/sysctl.conf`）中添加：
+
+```sh
+src-git sysctl https://github.com/Potterli20/luci-app-sysctl
+```
+
+然后：
+
+```sh
+./scripts/feeds update sysctl
+./scripts/feeds install luci-app-sysctl
+make menuconfig   # LuCI -> Applications -> <*> luci-app-sysctl
+```
+
+> 仓库根即 feed 根，包本体位于仓库根下的 `luci-app-sysctl/` 子目录——OpenWrt feed 扫描要求每个 package 位于独立子目录，直接把包文件放在仓库根会导致 `目标模式不含有%` 类扫描错误。
 
 ## 使用说明
 
@@ -167,6 +197,12 @@ rpcd 未注册 `luci.sysctl` 对象或 ACL 未生效：`/etc/init.d/rpcd restart
 大概率同名参数被多个文件定义，你的值被后面加载的文件覆盖了（文件名字典序越靠后优先级越高，如 `99-conntrack.conf` 会覆盖 `99-luci-sysctl.conf`）。点击 **检测重复** 可看到完整的定义链与生效来源，按提示删除多余定义或直接编辑生效文件。
 
 ## 更新日志
+
+### v1.7.6
+- 结果提示条（成功/警告）从页面底部按钮上方**移至"自定义参数"区块顶部**，点"应用配置"后自动滚动到提示处，无需下翻页面。纯前端改动
+
+### v1.7.5
+- 结果提示条不再永久驻留：**成功类提示 4 秒后自动消失**（含"全部配置已成功应用""参数已保存"），带注意事项的保存提示 8 秒后消失；**警告/错误类提示保持常驻**直到下一次操作替换，避免成功提示一直占据页面。纯前端改动
 
 ### v1.7.4
 - 修复标准 OpenWrt 24.10 主题下操作按钮行（添加参数/应用配置/检测重复/刷新）不居中：新版主题按钮行为 flex 布局（justify-content: flex-end），旧修复仅覆盖 float+text-align 方式；现两种布局方式都强制居中，并统一按钮间距。纯前端改动
